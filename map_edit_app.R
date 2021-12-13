@@ -65,9 +65,11 @@ ui <-   navbarPage("Rgugik", theme = shinytheme("yeti"),
                    mainPanel(
                    radioButtons(inputId = "composition",
                                 label = "Select composition:",
-                                choices = c("CIR", "NDVI"),
-                                selected = "CIR"),
-                   plotOutput(outputId = "myshapefile"))),
+                                choices = c("CIR", "RGB" , "NDVI")),
+                                
+                   splitLayout(cellWidths = c("50%", "50%"),
+                   plotOutput(outputId = "myshapefile")),
+                   plotOutput("myshapefile_ndvi"))),
                             
                    tabPanel("Z MAPY",
                    sidebarPanel(
@@ -227,78 +229,73 @@ server <- function(input,output){
     
   })
   
-  
   my_raster = reactive({
     st_set_crs(map(),2180)
     req_df = ortho_request(map())
-    req_df = req_df[req_df$composition == "CIR", ]
+    if(input$composition == "CIR" | input$composition == "NDVI"){
+    req_df = req_df[req_df$composition == "CIR", ]}
+    if(input$composition == "RGB"){
+    req_df = req_df[req_df$composition == "RGB", ]
+    }
     req_df = req_df[order(-req_df$year), ]
     last_year =  req_df$year[1]
     req_df = req_df[req_df$year == last_year, ]
-    
-    tile_download(req_df)#, method = "wget")
-    
-    
+    tile_download(req_df, method = "wget")
     
     filenames = paste0(req_df$filename,".tif")
-    #filenames_rgb = paste0(req_df_rgb$filename,".tif")
     if (length(filenames) > 1){
       img = lapply(filenames, read_stars)
       img = do.call(st_mosaic, img)}
     if(length(filenames) == 1){img = read_stars(filenames)}  
     st_crs(img) = 2180
     img = st_crop(img, map())
-    
-    #RGB
-    #if (length(filenames_rgb) > 1){
-     # img_rgb = lapply(filenames_rgb, read_stars)
-    #  img_rgb = do.call(st_mosaic, img_rgb)}
-    # if(length(filenames_rgb) == 1){img_rgb = read_stars(filenames_rgb)} 
-    # st_crs(img_rgb) = 2180
-    # img_rgb = st_crop(img_rgb, map())
-    # 
-    # my_raster_rgb <- reactive({
-    #   st_set_crs(map(),2180)
-    #   req_df_rgb = req_df[req_df$composition == "RGB", ]
-    #   req_df_rgb = req_df_rgb[order(-req_df_rgb$year), ]
-    #   last_year_rgb = req_df_rgb$year[1]
-    #   req_df_rgb = req_df_rgb[req_df_rgb$year == last_year_rgb, ]
-    #   
-      
-      
-      
-      
-      
-   # })
+    #img
     
     
-    
-    
-    
-    
-    
-  })
+})
   
-  output$myshapefile <- renderPlot({
+  
+output$myshapefile <- renderPlot({
+  
+    #calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
+    #ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
+    if(input$composition == "RGB" | input$composition == "CIR"){
+    plot(my_raster(), rgb = c(1, 2, 3), main = input$composition)}
     
-    
+    if(input$composition == "NDVI"){
     calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
     ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
-    
-    
-    
-    
-    if(input$composition == "CIR"){
-      plot(my_raster(), rgb = c(1, 2, 3), main = "CIR") +
-        plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
-      }
+    plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
       
-    if(input$composition == "NDVI"){
-      plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
     }
+      
+      
+    
+  
+    #plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
+    
+    
+    
+    
+    #if(input$composition == "CIR"){
+      #plot(my_raster(), rgb = c(1, 2, 3), main = "CIR") +
+        #plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
+    #  }
+      
+  #  if(input$composition == "NDVI"){
+      #plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
+    #}
    
     
   })
+
+# output$myshapefile_ndvi <- renderPlot({
+#   if(input$composition == "NDVI"){
+#   calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
+#   ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
+#   plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}})
+  
+  
   
   # map2 <- reactive({
   #   req(input$filemap2)
@@ -417,7 +414,6 @@ server <- function(input,output){
 }
 
 shinyApp(server = server, ui = ui)
-
 
 
 
