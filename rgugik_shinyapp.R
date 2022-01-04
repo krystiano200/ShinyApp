@@ -99,19 +99,23 @@ ui <-   navbarPage(
         )
       ),
       mainPanel(
-        radioButtons(
-          inputId = "composition",
-          label = "Select composition:",
-          choices = c("CIR", "RGB" , "NDVI")),
-        splitLayout(cellWidths = c("50%", "50%"),
-                    plotOutput(
-                      outputId = "myshapefile"
+        tabsetPanel(
+          type = "tabs",
+          tabPanel("Table" ,DT::dataTableOutput("tableortho")),  #tableOutput("tableortho")),    #DT::dataTableOutput("tableortho")),
+          tabPanel("Plot",
+            radioButtons(
+              inputId = "composition",
+              label = "Select composition:",
+              choices = c("CIR", "RGB" , "NDVI")),
+            splitLayout(cellWidths = c("50%", "50%"),
+              plotOutput(
+                outputId = "myshapefile"
                     )
         ),
-        plotOutput("myshapefile_ndvi"
+            plotOutput("myshapefile_ndvi"
                    
-        )
-      )
+        ))
+      ))
     ),
     
     tabPanel(
@@ -305,55 +309,65 @@ server <- function(input,output){
                          shpdf$name[grep(pattern = "*.shp$",shpdf$name)],
                          sep = "/"
                          
-                         
+                       
     ))
     
+    my_tableortho <-  reactive({
+      ortho_request(map())
+    })
+
+    
+    output$tableortho <- DT::renderDataTable({
+      my_tableortho() 
+    })
     
     
     
-  })
-  
-  my_raster = reactive({
-    st_set_crs(map(),2180)
-    req_df = ortho_request(map())
-    if(input$composition == "CIR" | input$composition == "NDVI"){
-      req_df = req_df[req_df$composition == "CIR", ]}
-    else if(input$composition == "RGB"){
-      req_df = req_df[req_df$composition == "RGB", ]
-    }
-    req_df = req_df[order(-req_df$year), ]
-    last_year =  req_df$year[1]
-    req_df = req_df[req_df$year == last_year, ]
-    tile_download(req_df )#, method = "wget")
-    
-    filenames = paste0(req_df$filename,".tif")
-    if(length(filenames) > 1){
-      img = lapply(filenames, read_stars)
-      img = do.call(st_mosaic, img)}
-    else if(length(filenames) == 1){img = read_stars(filenames)}  
-    st_crs(img) = 2180
-    img = st_crop(img, map())
-    #img
     
     
   })
   
+  # my_raster = reactive({
+  #   st_set_crs(map(),2180)
+  #   req_df = ortho_request(map())
+  #   if(input$composition == "CIR" | input$composition == "NDVI"){
+  #     req_df = req_df[req_df$composition == "CIR", ]}
+  #   else if(input$composition == "RGB"){
+  #     req_df = req_df[req_df$composition == "RGB", ]
+  #   }
+  #   req_df = req_df[order(-req_df$year), ]
+  #   last_year =  req_df$year[1]
+  #   req_df = req_df[req_df$year == last_year, ]
+  #   tile_download(req_df )#, method = "wget")
+  #   
+  #   filenames = paste0(req_df$filename,".tif")
+  #   if(length(filenames) > 1){
+  #     img = lapply(filenames, read_stars)
+  #     img = do.call(st_mosaic, img)}
+  #   else if(length(filenames) == 1){img = read_stars(filenames)}  
+  #   st_crs(img) = 2180
+  #   img = st_crop(img, map())
+  #   #img
+  #   
+  #   
+  # })
   
-  output$myshapefile <- renderPlot({
-    
-    #calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
-    #ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
-    if(input$composition == "RGB" | input$composition == "CIR"){
-      plot(my_raster(), rgb = c(1, 2, 3), main = input$composition)}
-    
-    else if(input$composition == "NDVI"){
-      calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
-      ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
-      plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
-      
-    }
-    
-  })  
+  
+  # output$myshapefile <- renderPlot({
+  #   
+  #   #calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
+  #   #ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
+  #   if(input$composition == "RGB" | input$composition == "CIR"){
+  #     plot(my_raster(), rgb = c(1, 2, 3), main = input$composition)}
+  #   
+  #   else if(input$composition == "NDVI"){
+  #     calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
+  #     ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
+  #     plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))
+  #     
+  #   }
+  #   
+  # })  
   
   map_dem <- reactive({
     req(input$filemap2)
@@ -401,8 +415,9 @@ server <- function(input,output){
   })
   
   nmt_img <- reactive({
-  s = input$tabledem_rows_selected
-  table_selected = my_table()[s,]
+  my_rows = input$tabledem_rows_selected
+  
+  table_selected = my_table()[my_rows,]
   real_selected = filter(my_table(), seriesID == table_selected$seriesID)
   tile_download(real_selected)
   dem_filenames = paste0(real_selected$filename,".tif")
