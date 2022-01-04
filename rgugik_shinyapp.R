@@ -423,8 +423,11 @@ server <- function(input,output){
   
   table_selected = my_table()[my_rows,]
   real_selected = filter(my_table(), seriesID == table_selected$seriesID)
-  tile_download(real_selected)
-  dem_filenames = paste0(real_selected$filename,".tif")
+  tile_download(real_selected)  #, method = "wget")
+  
+  #tu jest maly problem, poniewaz są pliki .zip ktore maja w sobie kilka roznych asc
+
+  dem_filenames = paste0(real_selected$filename,".asc")
   if (length(dem_filenames) > 1){
     img_dem = lapply(dem_filenames, read_stars)
     img_dem = do.call(st_mosaic, img_dem)}
