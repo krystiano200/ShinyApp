@@ -101,20 +101,21 @@ ui <-   navbarPage(
       mainPanel(
         tabsetPanel(
           type = "tabs",
-          tabPanel("Table" ,DT::dataTableOutput("tableortho")),  #tableOutput("tableortho")),    #DT::dataTableOutput("tableortho")),
-          tabPanel("Plot",
+          tabPanel("Table" ,DT::dataTableOutput("tableortho")), 
+          tabPanel(
+            "Plot",
             radioButtons(
               inputId = "composition",
               label = "Select composition:",
               choices = c("CIR", "RGB" , "NDVI")),
-            splitLayout(cellWidths = c("50%", "50%"),
+            
               plotOutput(
                 outputId = "myshapefile"
-                    )
-        ),
+            )
+        )),
             plotOutput("myshapefile_ndvi"
                    
-        ))
+        
       ))
     ),
     
@@ -293,7 +294,7 @@ server <- function(input,output){
   )
   
   
-  map <- reactive({
+  map_ortho <- reactive({
     req(input$filemap)
     shpdf <- input$filemap
     tempdirname <- dirname(shpdf$datapath[1])
@@ -305,16 +306,18 @@ server <- function(input,output){
       )
     }
     
-    map <- read_sf(paste(tempdirname,
+    map_ortho <- read_sf(paste(tempdirname,
                          shpdf$name[grep(pattern = "*.shp$",shpdf$name)],
                          sep = "/"
                          
                        
     ))
     
-    my_tableortho <-  reactive({
-      ortho_request(map())
+    
     })
+    
+    my_tableortho <-  reactive({
+      ortho_request(map_ortho())
 
     
     output$tableortho <- DT::renderDataTable({
@@ -400,7 +403,7 @@ server <- function(input,output){
   my_table <-  reactive({
     DEM_request(map_dem()) %>%
     select(year,format,resolution,
-    CRS,filename,product,seriesID) %>%
+    CRS,filename,product,seriesID, URL) %>%
     filter(product %in% c("DTM", "DSM")) %>% 
     arrange(desc(year))
     
@@ -416,6 +419,7 @@ server <- function(input,output){
   
   nmt_img <- reactive({
   my_rows = input$tabledem_rows_selected
+  
   
   table_selected = my_table()[my_rows,]
   real_selected = filter(my_table(), seriesID == table_selected$seriesID)
@@ -435,9 +439,7 @@ server <- function(input,output){
   output$myshapefile2 <- renderPlot({
     plot(nmt_img())
 
-
-
-  })
+ })
   
   
 
