@@ -109,14 +109,14 @@ ui <-   navbarPage(
               label = "Select composition:",
               choices = c("CIR", "RGB" , "NDVI")),
             
-              plotOutput(
-                outputId = "myshapefile"
+            plotOutput(
+              outputId = "myshapefile"
             )
-        )),
-            plotOutput("myshapefile_ndvi"
+          )),
+        plotOutput("myshapefile_ndvi"
                    
-        
-      ))
+                   
+        ))
     ),
     
     tabPanel(
@@ -307,18 +307,18 @@ server <- function(input,output){
     }
     
     map_ortho <- read_sf(paste(tempdirname,
-                         shpdf$name[grep(pattern = "*.shp$",shpdf$name)],
-                         sep = "/"
-                         
-                       
+                               shpdf$name[grep(pattern = "*.shp$",shpdf$name)],
+                               sep = "/"
+                               
+                               
     ))
     
     
-    })
+  })
+  
+  my_tableortho <-  reactive({
+    ortho_request(map_ortho())
     
-    my_tableortho <-  reactive({
-      ortho_request(map_ortho())
-
     
     output$tableortho <- DT::renderDataTable({
       my_tableortho() 
@@ -391,6 +391,7 @@ server <- function(input,output){
                              
     ))
     
+    #st_set_crs(map_dem,2180)
     
     
     
@@ -402,53 +403,67 @@ server <- function(input,output){
   
   my_table <-  reactive({
     DEM_request(map_dem()) %>%
-    select(year,format,resolution,
-    CRS,filename,product,seriesID, URL) %>%
-    filter(product %in% c("DTM", "DSM")) %>% 
-    arrange(desc(year))
+      select(year,format,resolution,
+             CRS,filename,product,seriesID, URL) %>%
+      filter(product %in% c("DTM", "DSM")) %>% 
+      arrange(desc(year))
     
-})
+  })
   
   
   
-
+  
   
   output$tabledem <- DT::renderDataTable({
     my_table() 
   })
+  my_rows = reactive({
+    input$tabledem_rows_selected
+  })
+  
+  
   
   nmt_img <- reactive({
-  my_rows = input$tabledem_rows_selected
+    
+    
+    
+    
+    
+    table_selected = my_table()[my_rows(),]
+    
+    real_selected = filter(my_table(), seriesID == table_selected$seriesID)
+    tile_download(real_selected)  #, method = "wget")
+    
+    #tu jest maly problem, poniewaz są pliki .zip ktore maja w sobie kilka roznych asc
+    
+    dem_filenames = paste0(real_selected$filename,".asc")
+    if (length(dem_filenames) > 1){
+      img_dem = lapply(dem_filenames, read_stars)
+      img_dem = do.call(st_mosaic, img_dem)}
+    else if(length(dem_filenames) == 1){img_dem = read_stars(dem_filenames)}
+    dem_temp = map_dem()
+    st_crs(img_dem) = 2180
+    if(st_crs(dem_temp) != st_crs(img_dem)){
+      dem_temp = st_transform(dem_temp, st_crs(img_dem))
+    }
+    img_dem = st_crop(img_dem , dem_temp)
+    
+  })
   
-  
-  table_selected = my_table()[my_rows,]
-  real_selected = filter(my_table(), seriesID == table_selected$seriesID)
-  tile_download(real_selected)  #, method = "wget")
-  
-  #tu jest maly problem, poniewaz są pliki .zip ktore maja w sobie kilka roznych asc
-
-  dem_filenames = paste0(real_selected$filename,".asc")
-  if (length(dem_filenames) > 1){
-    img_dem = lapply(dem_filenames, read_stars)
-    img_dem = do.call(st_mosaic, img_dem)}
-  else if(length(dem_filenames) == 1){img_dem = read_stars(dem_filenames)}
-  
-
-})
   
   
   
   
   output$myshapefile2 <- renderPlot({
-    plot(nmt_img())
-
- })
-  
-  
-
-  
+    plot(nmt_img(),col = terrain.colors(99, alpha = NULL), main = "NMT")
     
-
+  })
+  
+  
+  
+  
+  
+  
   
   crud <- callModule(editMod, "test-edit", m, "breweries")
   my_polygon <- reactive({
