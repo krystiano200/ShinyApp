@@ -4,18 +4,21 @@ library(shiny)
 library(shinythemes)
 library(rgugik)
 library(sf)
-library(ggplot2)
 library(stars)
 library(mapview)
 library(mapedit)
 library(leaflet)
 library(dplyr)
-library(tibble)
+library(stringr)
 
-#setwd("/home/krystian/Shiny/Shiny_app")
+
+
+pliki = dir("./")
 
 morasko = st_point(c(16.942, 52.464))
 morasko = st_sfc(morasko, crs = 4326)
+'%nin%' = Negate('%in%')
+
 
 
 m = mapview(morasko)@map
@@ -111,12 +114,12 @@ ui <-   navbarPage(
             
             plotOutput(
               outputId = "myshapefile"
-            )
-          )),
-        plotOutput("myshapefile_ndvi"
-                   
-                   
-        ))
+            ))
+        )),
+      plotOutput("myshapefile_ndvi"
+                 
+                 
+      )
     ),
     
     tabPanel(
@@ -126,14 +129,20 @@ ui <-   navbarPage(
                 editModUI("test-edit"),
                 leafletOutput("edited"))),
       mainPanel(
-        radioButtons(
-          inputId = "composition2",
-          label = "Select composition:",
-          choices = c("CIR", "RGB", "NDVI"),
-          selected = "CIR"),
-        plotOutput(
-          outputId = "mapedit_finished"
-        )
+        tabsetPanel(
+          type = "tabs",
+          tabPanel("Table", DT::dataTableOutput("tableorthomap")),
+          tabPanel(
+            "Plot",
+            
+            radioButtons(
+              inputId = "composition2",
+              label = "Select composition:",
+              choices = c("CIR", "RGB", "NDVI"),
+              selected = "CIR")))),
+      plotOutput(
+        outputId = "mapedit_finished"
+        
       )
     )
   ),
@@ -162,13 +171,14 @@ ui <-   navbarPage(
             choices = c("DTM", "DSM", "TREE"),
             selected = "DTM"
           )
-        )
+        )  
+        
       ),
       
       plotOutput(outputId = "myshapefile2")
       
     )
-  ),
+  )
 )
 
 
@@ -318,46 +328,83 @@ server <- function(input,output){
   
   my_tableortho <-  reactive({
     ortho_request(map_ortho())
-    
-    
-    output$tableortho <- DT::renderDataTable({
-      my_tableortho() 
-    })
-    
-    
+  })
+  
+  
+  output$tableortho <- DT::renderDataTable({
+    my_tableortho() %>% arrange(desc(year)) %>% 
+      select(year,resolution,composition,
+             CRS,URL,filename,seriesID)
+  })
+  
+  my_raster <- reactive({
+    my_rows_sel = input$tableortho_rows_selected
+    table_sel = my_tableortho()[my_rows_sel,]
+    real_sel = filter(my_tableortho(), seriesID == table_sel$seriesID)
+    if(paste0(real_sel$filename,".tif") %nin%  pliki){
+    tile_download(real_sel)}
+    filenames = paste0(real_sel$filename,".tif")
+    if (length(filenames) > 1){
+      img = lapply(filenames, read_stars)
+      img = do.call(st_mosaic, img)}
+    else if(length(filenames) == 1){img = read_stars(filenames)}
+    ortho_temp = map_ortho()
+    st_crs(img) = 2180
+    if(st_crs(ortho_temp) != st_crs(img)){
+      ortho_temp = st_transform(ortho_temp, st_crs(img))
+    }
+    img = st_crop(img , ortho_temp)
     
     
     
   })
   
-  # my_raster = reactive({
-  #   st_set_crs(map(),2180)
-  #   req_df = ortho_request(map())
-  #   if(input$composition == "CIR" | input$composition == "NDVI"){
-  #     req_df = req_df[req_df$composition == "CIR", ]}
-  #   else if(input$composition == "RGB"){
-  #     req_df = req_df[req_df$composition == "RGB", ]
-  #   }
-  #   req_df = req_df[order(-req_df$year), ]
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  # 
+  #  my_raster = reactive({
+  #    st_set_crs(map_ortho(),2180)
+  #    req_df = ortho_request(map_ortho())
+  #    if(input$composition == "CIR" | input$composition == "NDVI"){
+  #      req_df = req_df[req_df$composition == "CIR", ]}
+  #    else if(input$composition == "RGB"){
+  #      req_df = req_df[req_df$composition == "RGB", ]
+  #    }
+  #    req_df = req_df[order(-req_df$year), ]
   #   last_year =  req_df$year[1]
-  #   req_df = req_df[req_df$year == last_year, ]
-  #   tile_download(req_df )#, method = "wget")
-  #   
+  #    req_df = req_df[req_df$year == last_year, ]
+  #    tile_download(req_df )#, method = "wget")
+  # 
   #   filenames = paste0(req_df$filename,".tif")
-  #   if(length(filenames) > 1){
-  #     img = lapply(filenames, read_stars)
-  #     img = do.call(st_mosaic, img)}
-  #   else if(length(filenames) == 1){img = read_stars(filenames)}  
-  #   st_crs(img) = 2180
-  #   img = st_crop(img, map())
-  #   #img
-  #   
-  #   
-  # })
-  
-  
-  # output$myshapefile <- renderPlot({
-  #   
+  #    if(length(filenames) > 1){
+  #      img = lapply(filenames, read_stars)
+  #      img = do.call(st_mosaic, img)}
+  #    else if(length(filenames) == 1){img = read_stars(filenames)}
+  #    st_crs(img) = 2180
+  #    img = st_crop(img, map_ortho())
+  #    #img
+  # 
+  # 
+  #  })
+  # 
+  # 
+  output$myshapefile <- renderPlot({
+    plot(my_raster(), rgb = c(1, 2, 3))})
+    
   #   #calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
   #   #ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
   #   if(input$composition == "RGB" | input$composition == "CIR"){
@@ -370,7 +417,7 @@ server <- function(input,output){
   #     
   #   }
   #   
-  # })  
+  # })
   
   map_dem <- reactive({
     req(input$filemap2)
@@ -417,26 +464,36 @@ server <- function(input,output){
   output$tabledem <- DT::renderDataTable({
     my_table() 
   })
-  my_rows = reactive({
-    input$tabledem_rows_selected
-  })
+  # my_rows = reactive({
+  #   input$tabledem_rows_selected
+  # })
   
   
   
   nmt_img <- reactive({
     
-    
-    
-    
-    
-    table_selected = my_table()[my_rows(),]
-    
+    #pliki = dir("./")
+    my_rows = input$tabledem_rows_selected
+    table_selected = my_table()[my_rows,]
     real_selected = filter(my_table(), seriesID == table_selected$seriesID)
-    tile_download(real_selected)  #, method = "wget")
     
-    #tu jest maly problem, poniewaz są pliki .zip ktore maja w sobie kilka roznych asc
+    if(paste0(real_selected$filename,".asc") %nin%  pliki){
+    tile_download(real_selected)}  #, method = "wget")
     
-    dem_filenames = paste0(real_selected$filename,".asc")
+    ######
+    
+    
+    if(str_sub(real_selected$URL, start = -4, end = -1)[1] == ".zip"){
+     
+      dem_filenames = str_sub(real_selected$filename, start = 14)
+      pattern = c(paste0(dem_filenames, collapse="|")) 
+      index = grep(pattern, pliki)
+      dem_filenames = pliki[index]
+      
+    }
+    else{
+      dem_filenames = paste0(real_selected$filename,".asc")}
+    
     if (length(dem_filenames) > 1){
       img_dem = lapply(dem_filenames, read_stars)
       img_dem = do.call(st_mosaic, img_dem)}
@@ -469,6 +526,18 @@ server <- function(input,output){
   my_polygon <- reactive({
     req(crud()$finished)
   })
+  
+  # my_tableorthomap <- reactive({
+  #   ortho_request(my_polygon())
+  # })
+  # 
+  # output$tableorthomap <- DT::renderDataTable({
+  #   my_tableorthomap() 
+  # })
+  
+  
+  
+  
   
   
   my_raster_map <- reactive({
