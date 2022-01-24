@@ -13,7 +13,7 @@ library(stringr)
 
 
 
-pliki = dir("./")
+#pliki = dir("./")
 
 morasko = st_point(c(16.942, 52.464))
 morasko = st_sfc(morasko, crs = 4326)
@@ -485,18 +485,26 @@ server <- function(input,output){
     
     if(str_sub(real_selected$URL, start = -4, end = -1)[1] == ".zip"){
       
+      
+      print("---------------------------------------------------")
       tile_download(real_selected, outdir = "./zipdir")
+      files = dir("zipdir/")
+      
       sheetnames = real_selected$sheetID
       
       pattern = c(paste0(sheetnames, collapse="|")) 
       index = grep(pattern, files)
       dem_filenames = files[index]
-      setwd("./zipdir")
+      
       
       if (length(dem_filenames) > 1){
+        setwd("zipdir/")
         img_dem = lapply(dem_filenames, read_stars)
         img_dem = do.call(st_mosaic, img_dem)}
-      else if(length(dem_filenames) == 1){img_dem = read_stars(dem_filenames)}
+      else if(length(dem_filenames) == 1){
+        setwd("zipdir/")
+        img_dem = read_stars(dem_filenames)
+        }
       dem_temp = map_dem()
       st_crs(img_dem) = 2180
       if(st_crs(dem_temp) != st_crs(img_dem)){
@@ -508,7 +516,8 @@ server <- function(input,output){
       
     }
     else{
-      tile_download(real_selected)
+      if(paste0(real_selected$filename,".asc") %nin%  pliki){
+      tile_download(real_selected)}
       dem_filenames = paste0(real_selected$filename,".asc")}
     
     if (length(dem_filenames) > 1){
