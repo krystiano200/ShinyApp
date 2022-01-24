@@ -472,26 +472,43 @@ server <- function(input,output){
   
   nmt_img <- reactive({
     
-    #pliki = dir("./")
+    files = dir("./")
     my_rows = input$tabledem_rows_selected
     table_selected = my_table()[my_rows,]
     real_selected = filter(my_table(), seriesID == table_selected$seriesID)
     
-    if(paste0(real_selected$filename,".asc") %nin%  pliki){
-    tile_download(real_selected)}  #, method = "wget")
+    #if(paste0(real_selected$filename,".asc") %nin%  pliki){
+    #tile_download(real_selected)}  #, method = "wget")
     
     ######
     
     
     if(str_sub(real_selected$URL, start = -4, end = -1)[1] == ".zip"){
-     
-      dem_filenames = str_sub(real_selected$filename, start = 14)
-      pattern = c(paste0(dem_filenames, collapse="|")) 
-      index = grep(pattern, pliki)
-      dem_filenames = pliki[index]
+      
+      tile_download(real_selected, outdir = "./zipdir")
+      sheetnames = real_selected$sheetID
+      
+      pattern = c(paste0(sheetnames, collapse="|")) 
+      index = grep(pattern, files)
+      dem_filenames = files[index]
+      setwd("./zipdir")
+      
+      if (length(dem_filenames) > 1){
+        img_dem = lapply(dem_filenames, read_stars)
+        img_dem = do.call(st_mosaic, img_dem)}
+      else if(length(dem_filenames) == 1){img_dem = read_stars(dem_filenames)}
+      dem_temp = map_dem()
+      st_crs(img_dem) = 2180
+      if(st_crs(dem_temp) != st_crs(img_dem)){
+        dem_temp = st_transform(dem_temp, st_crs(img_dem))
+      }
+      img_dem = st_crop(img_dem , dem_temp)
+      
+      
       
     }
     else{
+      tile_download(real_selected)
       dem_filenames = paste0(real_selected$filename,".asc")}
     
     if (length(dem_filenames) > 1){
