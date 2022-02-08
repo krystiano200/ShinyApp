@@ -20,13 +20,15 @@ morasko = st_sfc(morasko, crs = 4326)
 '%nin%' = Negate('%in%')
 files = dir("./")
 m = mapview(morasko)@map
-testsf = NULL
+#n = mapview(morasko)@map
+#testsf = NULL
+
 
 
 #USER INTERFACE
 
 ui <-   navbarPage(
-  "Rgugik",
+  "RGUGIK",
   theme = shinytheme("yeti"),
   navbarMenu(
     "Granice",
@@ -105,17 +107,17 @@ ui <-   navbarPage(
           tabPanel("Table" ,DT::dataTableOutput("tableortho")), 
           tabPanel(
             "Plot",
-              splitLayout(cellWidths = c("50%","50%"),
-                plotOutput(
-                  outputId = "myshapefile"),
-                plotOutput(
-                  outputId = "myshapefile_ndvi"
-                )
+            splitLayout(cellWidths = c("50%","50%"),
+                        plotOutput(
+                          outputId = "myshapefile"),
+                        plotOutput(
+                          outputId = "myshapefile_ndvi"
+                        )
             ))
         )
-      
-                 
-                 
+        
+        
+        
       )
     ),
     
@@ -132,69 +134,60 @@ ui <-   navbarPage(
           tabPanel(
             "Plot",
             splitLayout(cellWidths = c("50%","50%"),
-            plotOutput(
-              outputId = "mapedit_finished"),
-            plotOutput(
-              outputId = "mapedit_ndvi" )
-            
-              
+                        plotOutput(
+                          outputId = "mapedit_finished"),
+                        plotOutput(
+                          outputId = "mapedit_ndvi" )
+                        
+                        
             )
-            ))
-        ))
+          ))
+      ))
   ),
   navbarMenu("NMT",
-  tabPanel(
-    "SHAPEFILE",
-    sidebarPanel(
-      fileInput("filemap2",
-                label = "Wybierz plik shp",    
-                accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"), 
-                multiple=TRUE
-      ),
-      
-      textInput(inputId = "dem_year", label = "Year"),
-      
-    ),
-    mainPanel(
-      tabsetPanel(
-        type = "tabs",
-        tabPanel("Table", DT::dataTableOutput("tabledem")),
-        tabPanel(
-          "Plot",
-          
-        )
-      )  
-      
-    ),
-    
-    
-    plotOutput(outputId = "myshapefile2")),
-    
-    
-  
-  
-  
-  tabPanel(
-    "Z Mapy",
-    sidebarPanel(
-      tagList(h2("Draw"),
-              editModUI("test-edit"),
-              leafletOutput("edited"))),
-    
-  mainPanel(
-      tabsetPanel(
-        type = "tabs",
-        tabPanel("Table", DT::dataTableOutput("tabledemmap")),
-        tabPanel(
-          "Plot"
-  )),
-  plotOutput(
-    outputId = "mapedit_dem")))))
-    
-  
-  
-    
-  
+             tabPanel(
+               "SHAPEFILE",
+               sidebarPanel(
+                 fileInput(
+                   "filemap2",
+                 label = "Wybierz plik shp",
+                 accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
+                 multiple=TRUE
+                 )
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   type = "tabs",
+                   tabPanel("Table", DT::dataTableOutput("tabledem")),
+                   tabPanel(
+                     "Plot",
+                plotOutput(
+                  outputId = "myshapefile2")))
+                 )),
+              tabPanel(
+               "Z Mapy",
+               sidebarPanel(
+                 tagList(h2("Draw"),
+                         editModUI("test-edit"),
+                         leafletOutput("edited"))),
+              mainPanel(
+                 tabsetPanel(
+                   type = "tabs",
+                   tabPanel("Table", DT::dataTableOutput("tabledemmap")),
+                   tabPanel(
+                     "Plot"
+                   )),
+                 plotOutput(
+                   outputId = "mapedit_dem")
+                 )
+              )
+             )
+      )
+
+
+
+
+
 
 #SERVER
 
@@ -383,11 +376,11 @@ server <- function(input,output){
       calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
       ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
       plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
-    }) 
+  }) 
   
   
   
- 
+  
   
   map_dem <- reactive({
     req(input$filemap2)
@@ -434,7 +427,7 @@ server <- function(input,output){
   output$tabledem <- DT::renderDataTable({
     my_table() 
   })
- 
+  
   
   
   
@@ -487,7 +480,7 @@ server <- function(input,output){
         img_dem = lapply(img_dem, my_rast)
         #img_dem = do.call(terra::mosaic, img_dem)
         img_dem = img_dem[[1]]
-        }
+      }
       else if(length(dem_filenames) == 1){
         
         img_dem = read_asc(dem_filenames)
@@ -502,10 +495,10 @@ server <- function(input,output){
       }
       
       img_dem = terra::crop(img_dem,dem_temp)
-      }
-   
+    }
     
-     else{
+    
+    else{
       if(paste0(real_selected$filename,".asc") %nin%  files){
         tile_download(real_selected)}
       dem_filenames = paste0(real_selected$filename,".asc")}
@@ -546,13 +539,13 @@ server <- function(input,output){
   my_tableorthomap <- reactive({
     ortho_request(my_polygon())
   })
-
+  
   output$tableorthomap <- DT::renderDataTable({
     my_tableorthomap() %>% arrange(desc(year)) %>% 
       select(year,resolution,composition,
              CRS,URL,filename,seriesID)
-  
-    })
+    
+  })
   my_select = reactive({input$tableorthomap_rows_selected})
   table_select = reactive({my_tableorthomap()[my_select(),]})
   real_select = reactive({filter(my_tableorthomap(), seriesID == table_select()$seriesID)})
@@ -566,16 +559,16 @@ server <- function(input,output){
     
     if(paste0(real_select()$filename,".tif") %nin%  files){
       tile_download(real_select())
-      }
+    }
     filenames_map = paste0(real_select()$filename,".tif")
     
     if (length(filenames_map) > 1){
       img_map = lapply(filenames_map, read_stars)
       img_map = do.call(st_mosaic, img_map)
-      }
+    }
     else if(length(filenames_map) == 1){
       img_map = read_stars(filenames_map)
-      }
+    }
     orthomap_temp = my_polygon()
     #st_crs(img_map) = 2180
     if(st_crs(orthomap_temp) != st_crs(img_map)){
@@ -584,24 +577,82 @@ server <- function(input,output){
     img_map = st_crop(img_map,orthomap_temp)
     img_map
     
-    })
+  })
   
   output$mapedit_finished <- renderPlot({
     plot(my_raster_map(), rgb = c(1, 2, 3), main = "aaa")
-})
-
+  })
+  
   output$mapedit_ndvi <- renderPlot({
     if(real_select()$composition == "CIR"){
-    calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
-    ndvi_map = st_apply(my_raster_map(), MARGIN = c("x", "y"), FUN = calc_ndvi)
-    plot(ndvi_map, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
+      calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
+      ndvi_map = st_apply(my_raster_map(), MARGIN = c("x", "y"), FUN = calc_ndvi)
+      plot(ndvi_map, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
     
-  
+    
   }) 
-
+  
 }
+
+
+
+
+crud <- callModule(editMod, "test-edit", m, breweries)
+my_polygon2 <- reactive({
+  req(crud$finished)
+})
+
+my_tabledem_map <- reactive({
+  DEM_request(my_polygon2()) %>%
+    select(year,format,resolution,
+           CRS,filename,product,seriesID, URL) %>%
+    filter(product %in% c("DTM", "DSM")) %>% 
+    arrange(desc(year))
+})
+
+output$tabledemmap <- DT::renderDataTable({
+  my_tabledem_map() 
+})
+
+my_select_map = reactive({input$tabledemmap_rows_selected})
+table_select_map = reactive({my_tabledemmap()[my_select_map(),] })
+real_select_map = reactive({filter(my_tabledem_map(), seriesID == table_select_map()$seriesID)})
+
+
+
+my_dem_map <- reactive({
   
   
+  if(paste0(real_select_map()$filename,".asc") %nin%  files){
+    tile_download(real_select_map())
+  }
+  dem_filenames_map = paste0(real_select_map()$filename,".asc")
+  
+  if (length(dem_filenames_map) > 1){
+    dem_map = lapply(dem_filenames_map, read_stars)
+    dem_map = do.call(st_mosaic, dem_map)
+  }
+  else if(length(dem_filenames_map) == 1){
+    dem_map = read_stars(dem_filenames_map)
+  }
+  temp_poly_dem = my_polygon2()
+  #st_crs(img_map) = 2180
+  if(st_crs(temp_poly_dem) != st_crs(dem_map)){
+    temp_poly_dem = st_transform(temp_poly_dem, st_crs(dem_map))
+  }
+  dem_map = st_crop(dem_map,temp_poly_dem)
+  dem_map
+  
+})
+
+output$mapedit_dem <- renderPlot({
+  plot(my_dem_map(),col = terrain.colors(99, alpha = NULL), main = "NMT")
+})
+
+
+
+
+
 
 shinyApp(server = server, ui = ui)
 
