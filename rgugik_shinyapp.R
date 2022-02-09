@@ -20,8 +20,8 @@ morasko = st_sfc(morasko, crs = 4326)
 '%nin%' = Negate('%in%')
 files = dir("./")
 m = mapview(morasko)@map
-#n = mapview(morasko)@map
-#testsf = NULL
+n = mapview(morasko)@map
+testsf = NULL
 
 
 
@@ -150,9 +150,9 @@ ui <-   navbarPage(
                sidebarPanel(
                  fileInput(
                    "filemap2",
-                 label = "Wybierz plik shp",
-                 accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
-                 multiple=TRUE
+                   label = "Wybierz plik shp",
+                   accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
+                   multiple=TRUE
                  )
                ),
                mainPanel(
@@ -161,28 +161,28 @@ ui <-   navbarPage(
                    tabPanel("Table", DT::dataTableOutput("tabledem")),
                    tabPanel(
                      "Plot",
-                plotOutput(
-                  outputId = "myshapefile2")))
-                 )),
-              tabPanel(
+                     plotOutput(
+                       outputId = "myshapefile2"))
+               ))),
+             tabPanel(
                "Z Mapy",
                sidebarPanel(
                  tagList(h2("Draw"),
-                         editModUI("test-edit"),
-                         leafletOutput("edited"))),
-              mainPanel(
+                         editModUI("test-edit2"),
+                         leafletOutput("edited2"))),
+               mainPanel(
                  tabsetPanel(
                    type = "tabs",
                    tabPanel("Table", DT::dataTableOutput("tabledemmap")),
                    tabPanel(
                      "Plot"
-                   )),
+                   ))),
                  plotOutput(
                    outputId = "mapedit_dem")
-                 )
-              )
-             )
-      )
+             
+             )))
+  
+
 
 
 
@@ -553,9 +553,7 @@ server <- function(input,output){
   
   
   my_raster_map <- reactive({
-    #my_select = input$tableorthomap_rows_selected
-    #table_select = my_tableorthomap()[my_select,]
-    #real_select = filter(my_tableorthomap(), seriesID == table_select$seriesID)
+    
     
     if(paste0(real_select()$filename,".tif") %nin%  files){
       tile_download(real_select())
@@ -593,25 +591,22 @@ server <- function(input,output){
   }) 
   
 }
-
-
-
-
-crud <- callModule(editMod, "test-edit", m, breweries)
+# 
+crud2 <- callModule(editMod, "test-edit2", m, "breweries")
 my_polygon2 <- reactive({
-  req(crud$finished)
+  req(crud2()$finished)
 })
 
 my_tabledem_map <- reactive({
   DEM_request(my_polygon2()) %>%
     select(year,format,resolution,
            CRS,filename,product,seriesID, URL) %>%
-    filter(product %in% c("DTM", "DSM")) %>% 
+    filter(product %in% c("DTM", "DSM")) %>%
     arrange(desc(year))
 })
 
 output$tabledemmap <- DT::renderDataTable({
-  my_tabledem_map() 
+  my_tabledem_map()
 })
 
 my_select_map = reactive({input$tabledemmap_rows_selected})
@@ -621,13 +616,13 @@ real_select_map = reactive({filter(my_tabledem_map(), seriesID == table_select_m
 
 
 my_dem_map <- reactive({
-  
-  
+
+
   if(paste0(real_select_map()$filename,".asc") %nin%  files){
     tile_download(real_select_map())
   }
   dem_filenames_map = paste0(real_select_map()$filename,".asc")
-  
+
   if (length(dem_filenames_map) > 1){
     dem_map = lapply(dem_filenames_map, read_stars)
     dem_map = do.call(st_mosaic, dem_map)
@@ -642,12 +637,15 @@ my_dem_map <- reactive({
   }
   dem_map = st_crop(dem_map,temp_poly_dem)
   dem_map
-  
+
 })
 
 output$mapedit_dem <- renderPlot({
   plot(my_dem_map(),col = terrain.colors(99, alpha = NULL), main = "NMT")
 })
+
+
+
 
 
 
