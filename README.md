@@ -16,4 +16,7 @@ install.packages("stringr")
 
 ```
 ## Przewodnik
-### Pierwsza zakładka
+#### Pierwsza zakładka
+Pierwsza zakładka dzieli się na 3 kolejne.
+Słuzą one do wizualizacji granic administracyjnych i możliwości pobierania ich w formacie Shapefile.
+#### Druga zakładka
