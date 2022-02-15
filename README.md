@@ -20,3 +20,6 @@ install.packages("stringr")
 Pierwsza zakładka dzieli się na 3 kolejne.
 Słuzą one do wizualizacji granic administracyjnych i możliwości pobierania ich w formacie Shapefile.
 #### Druga zakładka
+Druga zakładka dzieli się na 2 kolejne.
+Służą one do transformacji pliku Shapefile lub wybranego na mapie poligonu na ortofotomapę.
+
