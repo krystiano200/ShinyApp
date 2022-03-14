@@ -37,12 +37,12 @@ ui <-   navbarPage(
              mainPanel(
                plotOutput(
                  outputId = "distplot",
-                 width = "100%"  , 
+                 width = "100%"  ,
                  height = "700px"
         )
       )
     ),
-    
+
     tabPanel(
       "Powiat",
       sidebarPanel(
@@ -61,7 +61,7 @@ ui <-   navbarPage(
         )
       ),
     ),
-    
+
     tabPanel(
       "Gmina",
       sidebarPanel(
@@ -75,13 +75,13 @@ ui <-   navbarPage(
       mainPanel(
         plotOutput(
           outputId = "plot_gmina",
-          width = "100%", 
-          height = "700px" 
+          width = "100%",
+          height = "700px"
         )
       ),
     )
   ),
-  
+
   navbarMenu(
     "Ortofotomapa",
     tabPanel(
@@ -90,28 +90,33 @@ ui <-   navbarPage(
         fileInput(
           "filemap",
           label = "Wybierz plik shp",
-          accept=c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),    
+          accept=c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
           multiple=TRUE
         )
+
       ),
       mainPanel(
         tabsetPanel(
           type = "tabs",
-          tabPanel("Table" ,DT::dataTableOutput("tableortho")), 
+          tabPanel("Table" ,DT::dataTableOutput("tableortho")),
           tabPanel(
             "Plot",
             splitLayout(cellWidths = c("50%","50%"),
                         plotOutput(
-                          outputId = "myshapefile"),
+                          outputId = "myshapefile",
+                          width = "100%",
+                          height = "600px"),
                         plotOutput(
-                          outputId = "myshapefile_ndvi"
+                          outputId = "myshapefile_ndvi",
+                          width = "100%",
+                          height = "600px"
             )
           )
         )
       )
     )
   ),
-    
+
     tabPanel(
       "Z MAPY",
       sidebarPanel(
@@ -124,13 +129,13 @@ ui <-   navbarPage(
           tabPanel("Table", DT::dataTableOutput("tableorthomap")),
           tabPanel(
             "Plot",
-            splitLayout(cellWidths = c("50%","50%"),
+              splitLayout(cellWidths = c("50%","50%"),
                         plotOutput(
                           outputId = "mapedit_finished"),
                         plotOutput(
                           outputId = "mapedit_ndvi" )
-                        
-                        
+
+
             )
           )
         )
@@ -155,7 +160,9 @@ ui <-   navbarPage(
                    tabPanel(
                      "Plot",
                      plotOutput(
-                       outputId = "myshapefile2"))
+                       outputId = "myshapefile2",
+                       width = "100%",
+                       height = "600px"))
                ))),
              tabPanel(
                "Z Mapy",
@@ -172,16 +179,18 @@ ui <-   navbarPage(
                    ))),
                  plotOutput(
                    outputId = "mapedit_dem")
-             
+
       )
-    )
   )
-  
+)
+
+
+
 
 #SERVER
 
 server <- function(input,output){
-  
+
   dane <- reactive({
     borders_get(voivodeship = input$Dataset)
   })
@@ -191,152 +200,152 @@ server <- function(input,output){
   dane3 <- reactive({
     borders_get(commune = input$Dataset3)
   })
-  
+
   output$distplot <- renderPlot({
     plot(dane(), main = paste0(input$Dataset))
   })
-  
+
   output$download <- downloadHandler(
     filename <- function() {
       paste0(input$Dataset,".zip")
-      
+
     },
     content = function(file) {
       withProgress(message = "Exporting Data", {
-        
+
         incProgress(0.5)
         tmp.path <- dirname(file)
-        
+
         name.base <- file.path(tmp.path, paste0(input$Dataset))
         name.glob <- paste0(name.base, ".*")
         name.shp  <- paste0(name.base, ".shp")
         name.zip  <- paste0(name.base, ".zip")
-        
-        if (length(Sys.glob(name.glob)) > 0) 
+
+        if (length(Sys.glob(name.glob)) > 0)
           file.remove(Sys.glob(name.glob))
         sf::st_write(dane(),
                      dsn = name.shp,
-                     driver = "ESRI Shapefile", 
+                     driver = "ESRI Shapefile",
                      quiet = TRUE)
-        
+
         zip::zipr(zipfile = name.zip,
                   files = Sys.glob(name.glob))
         req(file.copy(name.zip, file))
-        
+
         if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
-        
+
         incProgress(0.5)
       })
-    }  
+    }
   )
-  
+
   output$plot_powiat <- renderPlot({
     plot(dane2() , main = paste0(input$Dataset2 ))
   })
-  
+
   output$download2 <- downloadHandler(
     filename <- function() {
       paste0(input$Dataset2,".zip")
-      
+
     },
     content = function(file) {
       withProgress(message = "Exporting Data", {
-        
+
         incProgress(0.5)
         tmp.path <- dirname(file)
-        
+
         name.base <- file.path(tmp.path, paste0(input$Dataset2))
         name.glob <- paste0(name.base, ".*")
         name.shp  <- paste0(name.base, ".shp")
         name.zip  <- paste0(name.base, ".zip")
-        
+
         if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
         sf::st_write(dane2(), dsn = name.shp, ## layer = "shpExport",
                      driver = "ESRI Shapefile", quiet = TRUE)
-        
+
         zip::zipr(zipfile = name.zip, files = Sys.glob(name.glob))
         req(file.copy(name.zip, file))
-        
+
         if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
-        
+
         incProgress(0.5)
       })
-    }  
+    }
   )
-  
+
   output$plot_gmina <- renderPlot({
     plot(dane3(), main = paste0(input$Dataset3))
   })
-  
+
   output$download3 <- downloadHandler(
     filename <- function() {
       paste0(input$Dataset3,".zip")
-      
+
     },
     content = function(file) {
       withProgress(message = "Exporting Data", {
-        
+
         incProgress(0.5)
         tmp.path <- dirname(file)
-        
+
         name.base <- file.path(tmp.path, paste0(input$Dataset3))
         name.glob <- paste0(name.base, ".*")
         name.shp  <- paste0(name.base, ".shp")
         name.zip  <- paste0(name.base, ".zip")
-        
+
         if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
         sf::st_write(dane3(), dsn = name.shp, ## layer = "shpExport",
                      driver = "ESRI Shapefile", quiet = TRUE)
-        
+
         zip::zipr(zipfile = name.zip, files = Sys.glob(name.glob))
         req(file.copy(name.zip, file))
-        
+
         if (length(Sys.glob(name.glob)) > 0) file.remove(Sys.glob(name.glob))
-        
+
         incProgress(0.5)
-      })  
-    }        
+      })
+    }
   )
-  
-  
+
+
   map_ortho <- reactive({
     req(input$filemap)
     shpdf <- input$filemap
     tempdirname <- dirname(shpdf$datapath[1])
-    
+
     for (i in 1:nrow(shpdf)) {
       file.rename(
         shpdf$datapath[i],
         paste0(tempdirname, "/", shpdf$name[i])
       )
     }
-    
+
     map_ortho <- read_sf(paste(tempdirname,
                                shpdf$name[grep(pattern = "*.shp$",shpdf$name)],
                                sep = "/"
-                               
-                               
+
+
     ))
-    
-    
+
+
   })
-  
+
   my_tableortho <-  reactive({
-    ortho_request(map_ortho()) %>% arrange(desc(year)) %>% 
+    ortho_request(map_ortho()) %>% arrange(desc(year)) %>%
       select(year,resolution,composition,
              CRS,URL,filename,seriesID)
   })
-  
-  
+
+
   output$tableortho <- DT::renderDataTable({
-    my_tableortho() 
+    my_tableortho()
   })
   my_rows_sel = reactive({input$tableortho_rows_selected})
   table_sel = reactive({my_tableortho()[my_rows_sel(),]})
   real_sel = reactive({filter(my_tableortho(), seriesID == table_sel()$seriesID)})
-  
+
   my_raster <- reactive({
-   
+
     if(paste0(real_sel()$filename,".tif") %nin%  files){
       tile_download(real_sel())}
     filenames = paste0(real_sel()$filename,".tif")
@@ -350,73 +359,74 @@ server <- function(input,output){
       ortho_temp = st_transform(ortho_temp, st_crs(img))
     }
     img = st_crop(img , ortho_temp)
-    
-    
-    
+
+
+
   })
-  
+
   output$myshapefile <- renderPlot({
     plot(my_raster(), rgb = c(1, 2, 3), main ="")})
-  
+
   output$myshapefile_ndvi <- renderPlot({
     if(real_sel()$composition == "CIR"){
       calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
       ndvi = st_apply(my_raster(), MARGIN = c("x", "y"), FUN = calc_ndvi)
       plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
-  }) 
-  
-  
-  
-  
-  
+  })
+
+
+
+
+
+
   map_dem <- reactive({
     req(input$filemap2)
     shpdf_dem <- input$filemap2
     tempdirname_dem <- dirname(shpdf_dem$datapath[1])
-    
+
     for (i in 1:nrow(shpdf_dem)) {
       file.rename(
         shpdf_dem$datapath[i],
         paste0(tempdirname_dem, "/", shpdf_dem$name[i])
       )
     }
-    
+
     map_dem <- read_sf(paste(tempdirname_dem,
                              shpdf_dem$name[grep(pattern = "*.shp$",shpdf_dem$name)],
                              sep = "/"
-                             
-                             
+
+
     ))
     })
-  
+
   my_table <-  reactive({
     DEM_request(map_dem()) %>%
       select(year,format,resolution,
              CRS,filename,product,seriesID, URL) %>%
-      filter(product %in% c("DTM", "DSM")) %>% 
-      filter(str_sub(URL, start = -4, end = -1) == ".asc") %>% 
+      filter(product %in% c("DTM", "DSM")) %>%
+      filter(str_sub(URL, start = -4, end = -1) == ".asc") %>%
       arrange(desc(year))
-    
+
   })
-  
+
   output$tabledem <- DT::renderDataTable({
-    my_table() 
+    my_table()
   })
-  
+
   nmt_img <- reactive({
-    
+
     files = dir("./")
     my_rows = input$tabledem_rows_selected
     table_selected = my_table()[my_rows,]
-   
+
     real_selected = filter(my_table(), seriesID == table_selected$seriesID)
-    
+
     if(paste0(real_selected$filename,".asc") %nin%  files){
       tile_download(real_selected)}
-    
-    
+
+
     dem_filenames = paste0(real_selected$filename,".asc")
-    
+
     if (length(dem_filenames) > 1){
       img_dem = lapply(dem_filenames, read_stars)
       img_dem = do.call(st_mosaic, img_dem)}
@@ -427,47 +437,50 @@ server <- function(input,output){
       dem_temp = st_transform(dem_temp, st_crs(img_dem))
     }
     img_dem = st_crop(img_dem , dem_temp)
-  
+
   })
-  
-  
+
+
   output$myshapefile2 <- renderPlot({
     plot(nmt_img(),col = terrain.colors(99, alpha = NULL), main = "NMT")
-    
+
   })
-  
-  
-  
+
+
+
   crud <- callModule(editMod, "test-edit", m, "breweries")
   my_polygon <- reactive({
     req(crud()$finished)
   })
-  
+
   my_tableorthomap <- reactive({
-    ortho_request(my_polygon())%>% 
+    ortho_request(my_polygon())%>%
       select(year,resolution,composition,
-             CRS,URL,filename,seriesID) %>% 
+             CRS,URL,filename,seriesID) %>%
       arrange(desc(year))
   })
-  
+
   output$tableorthomap <- DT::renderDataTable({
-    my_tableorthomap()  
+    my_tableorthomap()
   })
-  
+
+
   my_select = reactive({input$tableorthomap_rows_selected})
   table_select = reactive({my_tableorthomap()[my_select(),]})
   real_select = reactive({filter(my_tableorthomap(), seriesID == table_select()$seriesID)})
-  
-  
-  
+
+
+
+
   my_raster_map <- reactive({
-    
-    
+
+
+
     if(paste0(real_select()$filename,".tif") %nin%  files){
       tile_download(real_select())
     }
     filenames_map = paste0(real_select()$filename,".tif")
-    
+
     if (length(filenames_map) > 1){
       img_map = lapply(filenames_map, read_stars)
       img_map = do.call(st_mosaic, img_map)
@@ -482,26 +495,26 @@ server <- function(input,output){
     }
     img_map = st_crop(img_map,orthomap_temp)
     img_map
-    
+
   })
-  
+
   output$mapedit_finished <- renderPlot({
-    plot(my_raster_map(), rgb = c(1, 2, 3), main = "aaa")
+    plot(my_raster_map(), rgb = c(1, 2, 3), main = "")
   })
-  
+
   output$mapedit_ndvi <- renderPlot({
     if(real_select()$composition == "CIR"){
       calc_ndvi = function(img) {(img[1] - img[2]) / (img[1] + img[2])}
       ndvi_map = st_apply(my_raster_map(), MARGIN = c("x", "y"), FUN = calc_ndvi)
       plot(ndvi_map, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
-    
-    
-  }) 
-  
+
+
+  })
+
 
 #
  crud2 <- callModule(editMod, "test-edit2", m, "breweries")
- 
+
  my_polygon2 <- reactive({
    req(crud2()$finished)
  })
@@ -511,7 +524,7 @@ server <- function(input,output){
      select(year,format,resolution,
             CRS,filename,product,seriesID, URL) %>%
      filter(product %in% c("DTM", "DSM")) %>%
-     filter(str_sub(URL, start = -4, end = -1) == ".asc") %>% 
+     filter(str_sub(URL, start = -4, end = -1) == ".asc") %>%
      arrange(desc(year))
  })
 
@@ -528,9 +541,9 @@ server <- function(input,output){
  my_dem_map <- reactive({
 
 
-  
+
    tile_download(real_select_map())
-   
+
    dem_filenames_map = paste0(real_select_map()$filename,".asc")
 
    if (length(dem_filenames_map) > 1){
@@ -551,12 +564,16 @@ server <- function(input,output){
  })
 
  output$mapedit_dem <- renderPlot({
-   plot(my_dem_map(),col = terrain.colors(99, alpha = NULL), main = "NMT")
+   plot(my_dem_map(),col = terrain.colors(40, alpha = NULL), main = "NMT")
  })
 
 
 
 }
+
+
+
+
 
 shinyApp(server = server, ui = ui)
 
