@@ -20,6 +20,19 @@ install.packages("stringr")
 Pierwsza zakładka dzieli się na 3 kolejne.
 Słuzą one do wizualizacji granic administracyjnych i możliwości pobierania ich w formacie Shapefile.
 #### Druga zakładka
-Druga zakładka dzieli się na 2 kolejne.
+Druga zakładka "Ortofotomapa" dzieli się na 2 kolejne.
 Służą one do transformacji pliku Shapefile lub wybranego na mapie poligonu na ortofotomapę.
+
+### Trzecia zakładka
+Trzecia zakładka, czyli numeryczny model terenu dzieli się na dwie kolejne.
+Istnieje zakładka "Shapefile" i "Z mapy".
+W tej części możemy wgrać plik shp lub narysować poligon na mapie,
+aby dostać w ich miejsce numeryczny model terenu.
+
+### Wskazówki
+Przy wgrywaniu plików shapefile należy zaznaczyć wszystkie 4 pliki.
+
+Im większe poligony tym większe pliki.
+
+Istnieją miejsca, które zwrócą Error
 
