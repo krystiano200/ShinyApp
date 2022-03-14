@@ -36,3 +36,5 @@ Im większe poligony tym większe pliki.
 
 Istnieją miejsca, które zwrócą Error
 
+Polecam dla NMT rysować większe poligony niż dla ortofotomapy
+
