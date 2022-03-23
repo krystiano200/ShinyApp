@@ -9,10 +9,12 @@ install.packages("shiny")
 install.packages("shinythemes")
 install.packages("sf")
 install.packages("stars")
+install.packages("leaflet)
 install.packages("mapview")
 install.packages("mapedit")
 install.packages("dplyr")
 install.packages("stringr")
+
 
 ```
 ## Jak odtworzyć 
