@@ -15,6 +15,12 @@ install.packages("dplyr")
 install.packages("stringr")
 
 ```
+## Jak odtworzyć 
+---r
+library(shiny)
+runGitHub("ShinyApp", "krystiano200")
+---
+
 ## Przewodnik
 #### Pierwsza zakładka
 Pierwsza zakładka dzieli się na 3 kolejne.
@@ -36,5 +42,4 @@ Im większe poligony tym większe pliki.
 
 Istnieją miejsca, które zwrócą Error
 
-Polecam dla NMT rysować większe poligony niż dla ortofotomapy
 
