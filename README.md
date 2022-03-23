@@ -16,10 +16,11 @@ install.packages("stringr")
 
 ```
 ## Jak odtworzyć 
----r
+
+```r
 library(shiny)
 runGitHub("ShinyApp", "krystiano200")
----
+```
 
 ## Przewodnik
 #### Pierwsza zakładka
