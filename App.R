@@ -151,7 +151,8 @@ ui <-   navbarPage(
                    label = "Wybierz plik shp",
                    accept = c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
                    multiple=TRUE
-                 )
+                 ),
+                 downloadButton("downloadNMT","Pobierz")
                ),
                mainPanel(
                  tabsetPanel(
@@ -445,7 +446,16 @@ server <- function(input,output){
     plot(nmt_img(),col = terrain.colors(99, alpha = NULL), main = "NMT")
 
   })
+  #######################
+  output$downloadNMT <- downloadHandler(
+    filename <- function(){
+      paste0("ShinyNMT",".asc")
+    },
 
+    content = function(file){
+write_stars(nmt_img(), driver = "ascii")
+})
+###############################
 
 
   crud <- callModule(editMod, "test-edit", m, "breweries")
@@ -510,6 +520,9 @@ server <- function(input,output){
 
 
   })
+
+
+
 
 
 #
