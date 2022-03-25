@@ -39,8 +39,8 @@ ui <-   navbarPage(
                  outputId = "distplot",
                  width = "100%"  ,
                  height = "700px"
-        )
-      )
+               )
+             )
     ),
 
     tabPanel(
@@ -92,7 +92,8 @@ ui <-   navbarPage(
           label = "Wybierz plik shp",
           accept=c('.shp','.dbf','.sbn','.sbx','.shx',".prj"),
           multiple=TRUE
-        )
+        ),
+        downloadButton("downloadOrtho", "Pobierz")
 
       ),
       mainPanel(
@@ -110,26 +111,26 @@ ui <-   navbarPage(
                           outputId = "myshapefile_ndvi",
                           width = "100%",
                           height = "600px"
+                        )
             )
           )
         )
       )
-    )
-  ),
+    ),
 
     tabPanel(
       "Z MAPY",
-      sidebarPanel(
-        tagList(h2("Draw"),
-                editModUI("test-edit"),
-                leafletOutput("edited"))),
+      sidebarPanel( downloadButton("downloadOrtho2", "Pobierz"),
+                    tagList(h2("Draw"),
+                            editModUI("test-edit"),
+                            leafletOutput("edited"))),
       mainPanel(
         tabsetPanel(
           type = "tabs",
           tabPanel("Table", DT::dataTableOutput("tableorthomap")),
           tabPanel(
             "Plot",
-              splitLayout(cellWidths = c("50%","50%"),
+            splitLayout(cellWidths = c("50%","50%"),
                         plotOutput(
                           outputId = "mapedit_finished"),
                         plotOutput(
@@ -164,13 +165,13 @@ ui <-   navbarPage(
                        outputId = "myshapefile2",
                        width = "100%",
                        height = "600px"))
-               ))),
+                 ))),
              tabPanel(
                "Z Mapy",
-               sidebarPanel(
-                 tagList(h2("Draw"),
-                         editModUI("test-edit2"),
-                         leafletOutput("edited2"))),
+               sidebarPanel( downloadButton("downloadNMT2" , "Pobierz"),
+                             tagList(h2("Draw"),
+                                     editModUI("test-edit2"),
+                                     leafletOutput("edited2"))),
                mainPanel(
                  tabsetPanel(
                    type = "tabs",
@@ -178,10 +179,10 @@ ui <-   navbarPage(
                    tabPanel(
                      "Plot"
                    ))),
-                 plotOutput(
-                   outputId = "mapedit_dem")
+               plotOutput(
+                 outputId = "mapedit_dem")
 
-      )
+             )
   )
 )
 
@@ -375,6 +376,13 @@ server <- function(input,output){
       plot(ndvi, main = "NDVI", col = hcl.colors(10, palette = "RdYlGn"))}
   })
 
+  output$downloadOrtho <- downloadHandler(
+    filename = "orthophotomap.tif",
+
+    content = function(file){
+      write_stars(my_raster(), file, driver = "GTiff")
+    })
+
 
 
 
@@ -446,16 +454,13 @@ server <- function(input,output){
     plot(nmt_img(),col = terrain.colors(99, alpha = NULL), main = "NMT")
 
   })
-  #######################
+
   output$downloadNMT <- downloadHandler(
-    filename <- function(){
-      paste0("ShinyNMT",".asc")
-    },
+    filename = "NMT.tif",
 
     content = function(file){
-write_stars(nmt_img(), driver = "ascii")
-})
-###############################
+      write_stars(nmt_img(), file, driver = "GTiff")
+    })
 
 
   crud <- callModule(editMod, "test-edit", m, "breweries")
@@ -521,6 +526,13 @@ write_stars(nmt_img(), driver = "ascii")
 
   })
 
+  output$downloadOrtho2 <- downloadHandler(
+    filename = "orthophotomap.tif",
+
+    content = function(file){
+      write_stars(my_raster_map(), file, driver = "GTiff")
+    })
+
 
 
 
@@ -579,6 +591,13 @@ write_stars(nmt_img(), driver = "ascii")
  output$mapedit_dem <- renderPlot({
    plot(my_dem_map(),col = terrain.colors(40, alpha = NULL), main = "NMT")
  })
+
+ output$downloadNMT2 <- downloadHandler(
+   filename = "NMT.tif",
+
+   content = function(file){
+     write_stars(my_dem_map(), file, driver = "GTiff")
+   })
 
 
 
