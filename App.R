@@ -339,9 +339,9 @@ server <- function(input,output){
   })
 
 
-  output$tableortho <- DT::renderDataTable({
-    my_tableortho()
-  })
+  output$tableortho <- DT::renderDataTable(
+    my_tableortho(), selection = "single"
+  )
   my_rows_sel = reactive({input$tableortho_rows_selected})
   table_sel = reactive({my_tableortho()[my_rows_sel(),]})
   real_sel = reactive({filter(my_tableortho(), seriesID == table_sel()$seriesID)})
@@ -418,9 +418,9 @@ server <- function(input,output){
 
   })
 
-  output$tabledem <- DT::renderDataTable({
-    my_table()
-  })
+  output$tabledem <- DT::renderDataTable(
+    my_table(), selection = "single"
+  )
 
   nmt_img <- reactive({
 
@@ -475,9 +475,9 @@ server <- function(input,output){
       arrange(desc(year))
   })
 
-  output$tableorthomap <- DT::renderDataTable({
-    my_tableorthomap()
-  })
+  output$tableorthomap <- DT::renderDataTable(
+    my_tableorthomap(), selection = "single"
+  )
 
 
   my_select = reactive({input$tableorthomap_rows_selected})
@@ -553,9 +553,9 @@ server <- function(input,output){
      arrange(desc(year))
  })
 
- output$tabledemmap <- DT::renderDataTable({
-   my_tabledem_map()
- })
+ output$tabledemmap <- DT::renderDataTable(
+   my_tabledem_map(), selection = "single"
+ )
 
  my_select_map = reactive({input$tabledemmap_rows_selected})
  table_select_map = reactive({my_tabledem_map()[my_select_map(),] })
