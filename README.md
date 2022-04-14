@@ -43,6 +43,6 @@ Przy wgrywaniu plików shapefile należy zaznaczyć wszystkie 4 pliki.
 
 Im większe poligony tym większe pliki.
 
-Istnieją miejsca, które zwrócą Error
+
 
 
